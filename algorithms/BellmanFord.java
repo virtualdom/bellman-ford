@@ -68,11 +68,54 @@ public class BellmanFord {
 
       writeToMaster("-");
 
+      int tempParent, tempDistance, message;  //Might want to put these in constructor
+      String tmpString;
+
       do {
         readFromMaster();
 
         // Process only explore messages
         // Explore message processing goes here
+
+        tempParent = Integer.MIN_VALUE;
+        tempDistance = distance;
+
+        for(int i = 0; i < n; i++)
+        {
+          if(links[i][id] != null && links[i][id].getMessageType() == 'E')
+          {
+            tmpString = links[i][id].read();
+            message = parse(tmpString);
+
+            if(message + links[i][id].getWeight() < tempDistance)
+            {
+              if(tempParent == Integer.MIN_VALUE)
+                links[id][parent].write("N " + (distance - links[parent][id].getWeight()));
+              else
+                links[id][tempParent].write("N " + (tempDistance - links[tempParent][id].getWeight()));
+
+              tempParent = i;
+              tempDistance = message + links[i][id].getWeight();
+              resetResponses();
+            }
+            else
+            {
+              links[id][i].write("N " + message);
+              if (responses[i] == ACK)
+                responses[i] = NACK;
+            }
+          }
+        }
+
+        if (tempParent != Integer.MIN_VALUE)
+        {
+          parent = tempParent;
+          distance = tempDistance;
+
+          for(int i = 0; i < n; i++)
+            if(links[id][i] != null && parent != i)
+              links[id][i].write("E " + distance);
+        }
 
         // Process only NACKS/ACKS
         // (N)ACK processing goes here
