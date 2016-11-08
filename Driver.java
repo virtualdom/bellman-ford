@@ -25,7 +25,7 @@ public class Driver {
       return;
     }
 
-    if (inputScanner.hasNextInt()) leader = inputScanner.nextInt();
+    if (inputScanner.hasNextInt()) leader = inputScanner.nextInt() - 1;
     else {
       System.err.println(INPUT_FILE + " should begin with the number of processes, followed by whitespace, followed by the leader process ID.");
       return;
