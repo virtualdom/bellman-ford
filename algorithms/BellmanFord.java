@@ -2,6 +2,7 @@ package algorithms;
 
 import algorithms.AsynchLink;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class BellmanFord {
@@ -70,6 +71,7 @@ public class BellmanFord {
 
       int tempParent, tempDistance, message;  //Might want to put these in constructor
       String tmpString;
+      char messageType;
 
       do {
         readFromMaster();
@@ -89,10 +91,12 @@ public class BellmanFord {
 
             if(message + links[i][id].getWeight() < tempDistance)
             {
-              if(tempParent == Integer.MIN_VALUE)
-                links[id][parent].write("N " + (distance - links[parent][id].getWeight()));
-              else
-                links[id][tempParent].write("N " + (tempDistance - links[tempParent][id].getWeight()));
+              if (parent != -1 || tempParent != Integer.MIN_VALUE) {
+                if(tempParent == Integer.MIN_VALUE)
+                  links[id][parent].write("N " + (distance - links[parent][id].getWeight()));
+                else
+                  links[id][tempParent].write("N " + (tempDistance - links[tempParent][id].getWeight()));
+              }
 
               tempParent = i;
               tempDistance = message + links[i][id].getWeight();
@@ -119,8 +123,46 @@ public class BellmanFord {
 
         // Process only NACKS/ACKS
         // (N)ACK processing goes here
+        for (int i = 0; i < n; i++) {
+          if (links[i][id] != null) {
+            messageType = links[i][id].getMessageType();
+            if (messageType == 'A' || messageType == 'N') {
+              message = parse(links[i][id].read());
 
-        if (links[parent][id].getMessageType() == 'D') {
+              if (message == distance) {
+                responses[i] = messageType == 'A' ? ACK : NACK;
+              }
+            }
+          }
+        }
+
+        boolean responseFull = true;
+
+        for (int i = 0; i < n; i++) {
+          if (parent != i && responses[i] != NACK && responses[i] != ACK) {
+            responseFull = false;
+            break;
+          }
+        }
+
+        if (responseFull) {
+          if (leader) {
+            for (int i = 0; i < n; i++) {
+              if (links[id][i] != null && responses[i] == ACK)
+                links[id][i].write("D");
+            }
+
+            writeToMaster(Integer.toString(parent));
+            return;
+
+          } else if (responses[parent] == NO_ANSWER) {
+            links[id][parent].write("A " + (distance - links[id][parent].getWeight()));
+            responses[parent] = PARENT;
+          }
+        }
+
+        // DONE MESSAGES BEGIN HERE
+        if (!leader && parent != -1 && links[parent][id].getMessageType() == 'D') {
           for (int i = 0; i < n; i++) {
             if (responses[i] == ACK) {
               links[id][i].write("D");
@@ -193,11 +235,23 @@ public class BellmanFord {
           links[i][j].incrementTime();
   }
 
-  public void printTree () {
+  private void printChild (int parent, int level) {
+    for (int i = 0; i < n; i++) {
+      if (parents[i] == parent) {
+        for (int j = 0; j < level; j++) {
+          System.out.print("| ");
+        }
+        System.out.print("" + (i + 1) + "\n");
+        printChild(i, level + 1);
+      }
+    }
+  }
 
-    // ************************************
-    // print final tree using parents array
-    // ************************************
+  public void printTree () {
+    LinkedList<Integer> stack = new LinkedList<Integer>();
+
+    System.out.println(leader + 1);
+    printChild(leader, 1);
 
   }
 
@@ -219,7 +273,6 @@ public class BellmanFord {
       }
 
       updateLinkTimes();
-
       for (int i = 0; i < n; i++)
         if (parents[i] == -1) writeToProcess(i, "-");
     }

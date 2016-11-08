@@ -58,6 +58,6 @@ public class AsynchLink {
   public char getMessageType () {
     if (messageQueue.isEmpty() || messageQueue.peek().getTime() > timeUnit)
       return '-';
-    else return messageQueue.peek().getMessage().charAt(1);
+    else return messageQueue.peek().getMessage().charAt(0);
   }
 }
