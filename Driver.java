@@ -3,15 +3,15 @@ import java.util.Scanner;
 import java.io.*;
 
 public class Driver {
-  public static void main(String[] args) {
+  static int n = 0;
+  public static void main(String[] args) throws IOException {
     String INPUT_FILE = "./connectivity.txt";
 
     // Read input files
-    int n = 0;
     int leader = -1;
-    int[][] connectivity;
-    Scanner inputScanner;
-
+    int[][] connectivity = null;
+    Scanner inputScanner = null;
+    String result = null;
     try {
       inputScanner = new Scanner(new File(INPUT_FILE));
     } catch (FileNotFoundException e) {
@@ -19,30 +19,36 @@ public class Driver {
       return;
     }
 
-    if (inputScanner.hasNextInt()) n = inputScanner.nextInt();
-    else {
-      System.err.println(INPUT_FILE + " should begin with the number of processes.");
-      return;
-    }
+    String[] val = null;
 
-    if (inputScanner.hasNextInt()) leader = inputScanner.nextInt() - 1;
-    else {
+    result = inputScanner.nextLine();
+    if(result.contains(",")) {
+      val = result.split(",");
+    } else {
       System.err.println(INPUT_FILE + " should begin with the number of processes, followed by whitespace, followed by the leader process ID.");
       return;
     }
 
-    connectivity = new int [n][n];
+    if(result.matches(".*\\d.*")) {
+      n = Integer.valueOf(val[0]);
+      leader = Integer.valueOf(val[1]) - 1;
+    } else {
+      System.err.println(INPUT_FILE + " should begin with the number of processes.");
+      return;
+    }
 
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        if (inputScanner.hasNextInt()) connectivity[i][j] = inputScanner.nextInt();
-        else {
-          System.err.println(INPUT_FILE + " should contain " + (n * n) + " integers (a " + n + " x " + n + " matrix of integer values)");
-          return;
-        }
+    connectivity = new int[n][n];
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < n; j++)
+        connectivity[i][j] = -2;
 
-        if (connectivity[i][j] < -1) {
+    for (int row = 0; row < n; row++) {
+      for(int col = 0; col < n; col++) {
+        if (inputScanner.hasNextInt())
+          connectivity[row][col] = inputScanner.nextInt();
+        if(connectivity[row][col] < -1) {
           System.err.println(INPUT_FILE + " should only contain values that represent nonnegative edge weights or -1 to represent no edge");
+          System.err.println("There must be " + (n * n) + " integers in the connectivity matrix (" + n + " x " + n + ")");
           return;
         }
       }
