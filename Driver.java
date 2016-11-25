@@ -30,8 +30,8 @@ public class Driver {
     }
 
     if(result.matches(".*\\d.*")) {
-      n = Integer.valueOf(val[0]);
-      leader = Integer.valueOf(val[1]) - 1;
+      n = Integer.valueOf(val[0].trim());
+      leader = Integer.valueOf(val[1].trim()) - 1;
     } else {
       System.err.println(INPUT_FILE + " should begin with the number of processes.");
       return;
